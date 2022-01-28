@@ -20,7 +20,6 @@ const ImageGallery = ({ pictures, onClickHandler, getPictureUrl }) => {
           />
         </li>
       ))}
-      ;
     </ul>
   );
 };

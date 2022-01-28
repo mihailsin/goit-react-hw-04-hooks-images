@@ -1,49 +1,47 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-
+import api from 'services/pixabayApi';
 import styles from './Searchbar.module.css';
 
-class Searchbar extends Component {
-  state = {
-    inputValue: '',
-  };
+const Searchbar = ({ onSubmit }) => {
+  const [inputValue, setInputValue] = useState('');
 
-  submitHandler = e => {
-    const { inputValue } = this.state;
-
+  const submitHandler = e => {
     e.preventDefault();
-    if (inputValue.trim() === '') toast.error('Please type something!');
-    this.props.onSubmit(inputValue);
-    this.setState({ inputValue: '' });
+    if (inputValue.trim() === '') {
+      toast.error('Please type something!');
+      return;
+    }
+    onSubmit(inputValue);
+    api.resetPage();
+    setInputValue('');
     e.currentTarget.reset();
   };
 
-  inputHandler = e => {
+  const inputHandler = e => {
     const { value } = e.target;
 
-    this.setState({ inputValue: value });
+    setInputValue(value);
   };
 
-  render() {
-    return (
-      <header className={styles.searchbar}>
-        <form className={styles.searchForm} onSubmit={this.submitHandler}>
-          <button type="submit" className={styles.searchForm__button}>
-            <span className={styles.searchForm__buttonLabel}>Search</span>
-          </button>
+  return (
+    <header className={styles.searchbar}>
+      <form className={styles.searchForm} onSubmit={submitHandler}>
+        <button type="submit" className={styles.searchForm__button}>
+          <span className={styles.searchForm__buttonLabel}>Search</span>
+        </button>
 
-          <input
-            onChange={this.inputHandler}
-            className={styles.searchForm__input}
-            type="text"
-            autoComplete="off"
-            autoFocus
-            placeholder="Search images and photos"
-          />
-        </form>
-      </header>
-    );
-  }
-}
+        <input
+          onChange={inputHandler}
+          className={styles.searchForm__input}
+          type="text"
+          autoComplete="off"
+          autoFocus
+          placeholder="Search images and photos"
+        />
+      </form>
+    </header>
+  );
+};
 
 export default Searchbar;
