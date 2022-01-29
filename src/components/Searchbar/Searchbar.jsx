@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import api from 'services/pixabayApi';
 import styles from './Searchbar.module.css';
 
 const Searchbar = ({ onSubmit }) => {
@@ -13,7 +12,6 @@ const Searchbar = ({ onSubmit }) => {
       return;
     }
     onSubmit(inputValue);
-    api.resetPage();
     setInputValue('');
     e.currentTarget.reset();
   };
