@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import fetchPictures from '../../services/';
 import ImageGallery from '../ImageGallery';
 import Loader from '../Loader';
@@ -24,52 +24,39 @@ const View = ({ searchQuery }) => {
   const [status, setStatus] = useState(IDLE);
   const [modalVisibility, setModalVisibility] = useState(false);
   const [largeImageUrl, setLargeImageUrl] = useState(null);
-  const [prevQuery, setPrevQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const prevQuery = useRef(searchQuery);
 
   useEffect(() => {
-    if (searchQuery.trim() !== '' && searchQuery !== prevQuery) {
-      setStatus(PENDING);
-      setPrevQuery(searchQuery);
+    if (searchQuery !== prevQuery.current) {
       setCurrentPage(1);
-      fetchPictures(searchQuery, 1)
-        .then(data => {
-          if (data.hits.length === 0) {
-            toast.error('Sorry! There are no pictures matching your query.');
-          }
-          setResponse(data.hits);
-          setLength(data.totalHits);
-          setStatus(RESOLVED);
-        })
-        .catch(error => {
-          setStatus(REJECTED);
-          console.log(error.message);
-          toast.error(`${error.message}`);
-        });
-      return () => {
-        setPrevQuery(searchQuery);
-      };
+      setStatus(PENDING);
     }
-  }, [PENDING, REJECTED, RESOLVED, prevQuery, searchQuery]);
-
-  useEffect(() => {
-    if (currentPage !== 1 && prevQuery === searchQuery) {
+    if (searchQuery.trim() !== '') {
       fetchPictures(searchQuery, currentPage)
         .then(data => {
-          setResponse(prevResponse => [...prevResponse, ...data.hits]);
-          setStatus(RESOLVED);
-          scroll.scrollToBottom();
+          if (searchQuery !== prevQuery.current && currentPage === 1) {
+            setResponse(data.hits);
+            setLength(data.totalHits);
+            prevQuery.current = searchQuery;
+            setStatus(RESOLVED);
+            if (data.hits.length === 0) {
+              toast.error('Sorry! There are no pictures matching your query.');
+            }
+          }
+          if (searchQuery === prevQuery.current && currentPage !== 1) {
+            setResponse(prevResponse => [...prevResponse, ...data.hits]);
+            setStatus(RESOLVED);
+            scroll.scrollToBottom();
+          }
         })
         .catch(error => {
           setStatus(REJECTED);
           console.log(error.message);
           toast.error(`${error.message}`);
         });
-      return () => {
-        setPrevQuery(searchQuery);
-      };
     }
-  }, [REJECTED, RESOLVED, currentPage, prevQuery, searchQuery]);
+  }, [PENDING, REJECTED, RESOLVED, currentPage, prevQuery, searchQuery]);
 
   const onButtonClickHandler = () => {
     setCurrentPage(page => page + 1);
