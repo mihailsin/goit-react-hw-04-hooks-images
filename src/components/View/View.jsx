@@ -20,17 +20,19 @@ const View = ({ searchQuery }) => {
   const prevQuery = useRef(searchQuery);
 
   useEffect(() => {
-    const setInitialState = () => {
-      prevQuery.current = searchQuery;
-      setIsLoading(true);
-      setCurrentPage(1);
-    };
+    // const setInitialState = () => {
+    //   prevQuery.current = searchQuery;
+    //   setIsLoading(true);
+    //   setCurrentPage(1);
+    // };
     if (searchQuery.trim() !== '') {
-      if (searchQuery !== prevQuery.current) {
-        setInitialState();
-      }
       fetchPictures(searchQuery, currentPage)
         .then(data => {
+          if (searchQuery !== prevQuery.current) {
+            setCurrentPage(1);
+            setIsLoading(true);
+            prevQuery.current = searchQuery;
+          }
           if (currentPage === 1) {
             setResponse(data.hits);
           } else {
