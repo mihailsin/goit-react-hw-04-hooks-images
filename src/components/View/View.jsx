@@ -29,14 +29,15 @@ const View = ({ searchQuery }) => {
       fetchPictures(searchQuery, currentPage)
         .then(data => {
           if (searchQuery !== prevQuery.current) {
-            setCurrentPage(1);
             setIsLoading(true);
+            setCurrentPage(1);
             prevQuery.current = searchQuery;
           }
           if (currentPage === 1) {
             setResponse(data.hits);
           } else {
             setResponse(prevResponse => [...prevResponse, ...data.hits]);
+            scroll.scrollToBottom();
           }
 
           if (data.totalHits === 0) {
@@ -56,7 +57,6 @@ const View = ({ searchQuery }) => {
 
   const onButtonClickHandler = () => {
     setCurrentPage(page => page + 1);
-    scroll.scrollToBottom();
   };
 
   const toggleModal = () => {
