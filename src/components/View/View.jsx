@@ -11,55 +11,50 @@ const Scroll = require('react-scroll');
 const scroll = Scroll.animateScroll;
 
 const View = ({ searchQuery }) => {
-  const stateMachine = {
-    IDLE: 'idle',
-    PENDING: 'pending',
-    RESOLVED: 'resolved',
-    REJECTED: 'rejected',
-  };
-  const { IDLE, PENDING, RESOLVED, REJECTED } = stateMachine;
-
   const [response, setResponse] = useState([]);
   const [length, setLength] = useState(0);
-  const [status, setStatus] = useState(IDLE);
+  const [isLoading, setIsLoading] = useState(false);
   const [modalVisibility, setModalVisibility] = useState(false);
   const [largeImageUrl, setLargeImageUrl] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const prevQuery = useRef(searchQuery);
 
   useEffect(() => {
-    if (searchQuery !== prevQuery.current) {
+    const setInitialState = () => {
+      prevQuery.current = searchQuery;
+      setIsLoading(true);
       setCurrentPage(1);
-      setStatus(PENDING);
-    }
+    };
     if (searchQuery.trim() !== '') {
+      if (searchQuery !== prevQuery.current) {
+        setInitialState();
+      }
       fetchPictures(searchQuery, currentPage)
         .then(data => {
-          if (searchQuery !== prevQuery.current && currentPage === 1) {
+          if (currentPage === 1) {
             setResponse(data.hits);
-            setLength(data.totalHits);
-            prevQuery.current = searchQuery;
-            setStatus(RESOLVED);
-            if (data.hits.length === 0) {
-              toast.error('Sorry! There are no pictures matching your query.');
-            }
-          }
-          if (searchQuery === prevQuery.current && currentPage !== 1) {
+          } else {
             setResponse(prevResponse => [...prevResponse, ...data.hits]);
-            setStatus(RESOLVED);
-            scroll.scrollToBottom();
           }
+
+          if (data.totalHits === 0) {
+            toast.error('Sorry! There are no pictures matching your query.');
+          }
+
+          setLength(data.totalHits);
+          setIsLoading(false);
         })
         .catch(error => {
-          setStatus(REJECTED);
           console.log(error.message);
           toast.error(`${error.message}`);
+          setIsLoading(false);
         });
     }
-  }, [PENDING, REJECTED, RESOLVED, currentPage, prevQuery, searchQuery]);
+  }, [searchQuery, currentPage]);
 
   const onButtonClickHandler = () => {
     setCurrentPage(page => page + 1);
+    scroll.scrollToBottom();
   };
 
   const toggleModal = () => {
@@ -72,15 +67,15 @@ const View = ({ searchQuery }) => {
   const picturesLeft = length - response.length;
   return (
     <>
-      {status === PENDING && <Loader />}
-      {status === RESOLVED && response.length !== 0 && (
+      {isLoading && <Loader />}
+      {!isLoading && response.length !== 0 && (
         <ImageGallery
           pictures={response}
           onClickHandler={toggleModal}
           getPictureUrl={getUrl}
         />
       )}
-      {picturesLeft !== 0 && status !== PENDING && (
+      {picturesLeft !== 0 && !isLoading && (
         <Button onClickHandler={onButtonClickHandler} />
       )}
       {modalVisibility && largeImageUrl && (
